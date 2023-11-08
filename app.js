@@ -82,10 +82,10 @@ app.post('/upload', upload.single('file'), (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
     });
 
-    uploadStream.on('error', (error) => {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    });
+    // uploadStream.on('error', (error) => {
+    //   console.error(error);
+    //   res.status(500).json({ error: 'Internal Server Error' });
+    // });
 
     uploadStream.on('finish', () => {
       fs.unlink(req.file.path, (err) => {
@@ -105,7 +105,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
 app.get('/upload/:filename', (req, res) => {
   const bucket = new GridFSBucket(db, {
-    bucketName: 'uploads',
+    bucketName: 'folder.file',
   });
 
   bucket.find({ filename: req.params.filename }).toArray((err, files) => {
