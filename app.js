@@ -10,10 +10,12 @@ const Grid = require('gridfs-stream');
 const fs = require('fs');
 var indexRouter = require('./routes/index');
 const mongoose = require('mongoose');
+const MongoClient = require('mongodb')
 const db = require('./helper/db');
 const folder = require('./models/folder');
 const multer = require('multer');
 const { GridFSBucket } = require('mongodb');
+
 
 app.use(cors());
 
@@ -58,7 +60,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: storage, fileFilter: fileFilter });
 
 
-// Assuming you have initialized your MongoDB connection as 'db'
+// Post File
 app.post('/upload', upload.single('file'), (req, res) => {
   try {
     const file = req.file;
@@ -73,12 +75,13 @@ app.post('/upload', upload.single('file'), (req, res) => {
       contentType: mimetype
     });
 
-    const bucket = new GridFSBucket(db, { bucketName: 'folder.file' }); // Ganti 'uploads' dengan nama bucket yang sesuai
+    const bucket = new GridFSBucket(db, { bucketName: 'folder.file' });
   
-    const writeStaream = fs.createWriteStream(req.file.path)
+    const writeStaream = fs.createWriteStream( req.file.path)
     const readStream = fs.createReadStream(req.file.path);
     const uploadStream = bucket.openUploadStream(req.file.originalname);
-
+    readStream.pipe(uploadStream)
+    
     readStream.on('error', (error) => {
       console.error(error);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -100,12 +103,34 @@ app.post('/upload', upload.single('file'), (req, res) => {
       
     });
 
-    readStream.pipe(uploadStream);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'An error occurred while uploading the file' });
   }
 });
+
+
+app.get('/get', async (req, res) => {
+  try {
+
+    const bucket = new GridFSBucket(db, { bucketName: 'folder.file' });
+
+    const files = await bucket.find().toArray();
+
+    // Check if data is found
+    if (files.length > 0) {
+      // Data found
+      res.send(files);
+    } else {
+      // Data not found
+      res.send('No data found');
+    }
+  } catch (error) { 
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 
 app.get('/upload/:filename', (req, res) => {
@@ -114,6 +139,11 @@ app.get('/upload/:filename', (req, res) => {
   });
 
   bucket.find({ filename: req.params.filename }).toArray((err, files) => {
+    if (err) {
+      console.log(err);
+      return res.send({status: "error"})
+    }
+
     if (!files || files.length === 0) {
       return res.status(400).json({
         error: 'File Not Found',
@@ -122,17 +152,13 @@ app.get('/upload/:filename', (req, res) => {
 
     const file = files[0];
     const downloadStream = bucket.openDownloadStream(file._id);
+
+    // Set appropriate headers for file download
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+
     downloadStream.pipe(res);
   });
-});
-
-app.use(function (req, res, next) {
-  res.status(404).send('Not Found');
-});
-
-app.use(function (err, req, res, next) {
-  console.error(err.stack); // Log kesalahan secara lengkap di konsol
-  res.status(500).send('Internal Server Error');
 });
 
 module.exports = app;
