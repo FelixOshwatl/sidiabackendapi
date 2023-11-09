@@ -26,6 +26,7 @@ app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'folder')));
 
 app.use('/', indexRouter);
 
@@ -34,7 +35,7 @@ db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', () => {
   console.log('Berhasil Tersambung');
   gfs = Grid(db, mongoose.mongo);
-  gfs.collection('file'); // Ganti 'uploads' dengan nama koleksi yang sesuai
+  gfs.collection('folder.file.files'); 
 });
 
 const storage = multer.diskStorage({
@@ -73,6 +74,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
     });
 
     const bucket = new GridFSBucket(db, { bucketName: 'folder.file' }); // Ganti 'uploads' dengan nama bucket yang sesuai
+    fs.writeFileSync('folder');
 
     const readStream = fs.createReadStream(req.file.path);
     const uploadStream = bucket.openUploadStream(req.file.originalname);
@@ -94,6 +96,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
         }
       });
       res.send('File Berhasil Di Upload');
+
+      
     });
 
     readStream.pipe(uploadStream);
@@ -102,6 +106,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
     return res.status(500).json({ error: 'An error occurred while uploading the file' });
   }
 });
+
 
 app.get('/upload/:filename', (req, res) => {
   const bucket = new GridFSBucket(db, {

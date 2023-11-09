@@ -17,6 +17,9 @@ router.get('/folder', async (req, res) => {
         res.status(200).json(folders);
     } catch (err) {
         res.status(500).json({ error: 'Internal Server Error' })
+
+
+        
     }
 });
 
