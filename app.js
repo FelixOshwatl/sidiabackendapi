@@ -74,8 +74,8 @@ app.post('/upload', upload.single('file'), (req, res) => {
     });
 
     const bucket = new GridFSBucket(db, { bucketName: 'folder.file' }); // Ganti 'uploads' dengan nama bucket yang sesuai
-    fs.writeFileSync('folder');
-
+  
+    const writeStaream = fs.createWriteStream(req.file.path)
     const readStream = fs.createReadStream(req.file.path);
     const uploadStream = bucket.openUploadStream(req.file.originalname);
 
