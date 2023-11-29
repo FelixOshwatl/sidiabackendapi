@@ -15,7 +15,11 @@ const FileSchema = new mongoose.Schema({
   contentType: {
     type: String,
     required :true
-  } 
+  },
+  uploadDate:{
+    type :Date,
+    required:true
+  }
 });
 
   module.exports = mongoose.model('File', FileSchema);

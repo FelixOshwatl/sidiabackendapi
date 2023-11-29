@@ -9,6 +9,7 @@ var app = express();
 const Grid = require('gridfs-stream');
 const fs = require('fs');
 var indexRouter = require('./routes/index');
+var formRouter = require('./routes/form')
 const mongoose = require('mongoose');
 const MongoClient = require('mongodb')
 const db = require('./helper/db');
@@ -31,6 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'folder')));
 
 app.use('/', indexRouter);
+app.use('/', formRouter)
 
 let gfs;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -45,7 +47,7 @@ const storage = multer.diskStorage({
     cb(null, 'folder');
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname);
+    cb(null, Date.now()+'-'+ file.originalname);
   }
 });
 
